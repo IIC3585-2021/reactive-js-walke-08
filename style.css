@@ -1,0 +1,15 @@
+#pacman {
+  height: 45px;
+  width: 65px;
+}
+
+#mapa {
+  background-color: #000;
+  height: 400px;
+  width: 500px;
+}
+
+canvas { 
+  border: 1px solid black; 
+}
+    
