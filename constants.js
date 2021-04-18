@@ -114,3 +114,6 @@ export const COLS = 15;
 export const ROWS = 15;
 export const SPACE = 32;
 export const ENTER = 13;
+export const SPEED = 120;
+export const INITIAL_POSITION_P1 = {x: 20, y: 14};
+export const INITIAL_POSITION_P2 = {x: 8, y: 14};

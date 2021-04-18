@@ -5,7 +5,7 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
 } from "./canvas.js"
-import { DIRECTIONS, DIRECTIONS2, INITIAL_DIRECTION, CELL_SIZE, ROWS, COLS, WALLS, SPACE, ENTER } from './constants.js'
+import { DIRECTIONS, DIRECTIONS2, INITIAL_DIRECTION, CELL_SIZE, ROWS, COLS, WALLS, SPACE, ENTER, INITIAL_POSITION_P1, INITIAL_POSITION_P2, SPEED } from './constants.js'
 import { nextDirection } from './functions.js'
 
 const sprite  = new Image()
@@ -37,17 +37,16 @@ const tick$ = interval(5);
 
 const keyDown$ = fromEvent(document, 'keydown')
 
+const direction$ = keyDown$.pipe(
+  map(e => DIRECTIONS[e.keyCode]),
+  filter(Boolean),
+  startWith({x: 0, y: 0}),
+);
 
 const keyDownMod$ = keyDown$.pipe(
   map(e => e.keyCode),
 
   map(x => [x, 'DOWN']),
-);
-const keyUp$ = fromEvent(document, 'keyup');
-const direction$ = keyDown$.pipe(
-  map(e => DIRECTIONS[e.keyCode]),
-  filter(Boolean),
-  startWith({x: 0, y: 0}),
 );
 
 const direction2$ = keyDown$.pipe(
@@ -63,6 +62,9 @@ const keyDownFilter$ = keyDown$.pipe(
 const keyDownFilter2$ = keyDown$.pipe(
   filter(e => DIRECTIONS2[e.keyCode] !== undefined)
 )
+
+const keyUp$ = fromEvent(document, 'keyup');
+
 const keys$ = keyUp$.pipe(
   withLatestFrom(keyDownFilter$, (up, down) => ({up: up.keyCode, down: down.keyCode})),
   filter(x => x.up === x.down),
@@ -91,23 +93,23 @@ const last2$ = merge(keys2$, keyDownMod$).pipe(
 
 const player1$ = tick$.pipe(
   withLatestFrom(last$, direction$,(_, ekey, dir) => ({ekey, dir})),
-  throttleTime(120),
+  throttleTime(SPEED),
   filter(x => x.ekey === 'DOWN'),
   map(x => ({ direction: x.dir, walls: WALLS })),
-  scan(move, {x: 20, y: 14}),
-  startWith({x: 20, y: 14}),
+  scan(move, INITIAL_POSITION_P1),
+  startWith(INITIAL_POSITION_P1),
   tap(pos => {
     state = {...state, player1: pos}
   })
-) //.subscribe(pos =>render(ctx, pos, 'p1'));
+)
 
 const player2$ = tick$.pipe(
   withLatestFrom(last2$, direction2$,(_, ekey, dir) => ({ekey, dir})),
-  throttleTime(120),
+  throttleTime(SPEED),
   filter(x => x.ekey === 'DOWN'),
   map(x => ({ direction: x.dir, walls: WALLS })),
-  scan(move, {x: 8, y: 14}),
-  startWith({x: 8, y: 14}),
+  scan(move, INITIAL_POSITION_P2),
+  startWith(INITIAL_POSITION_P2),
   tap(pos => {
     state = {...state, player2: pos}
   })
@@ -129,13 +131,14 @@ const putBomb1$ = bomb1$.pipe(
   map(bomb => [bomb, 0]),
 )
 
-const putBomb2$ = bomb2$.pipe(
-  map(bomb => [bomb,0])
-)
-
 const explotion1$ = bomb1$.pipe(
   delay(1500),
   map(bomb => [bomb, 1]),
+)
+
+const endExplotion1$ = bomb1$.pipe(
+  delay(2000),
+  map(bomb => [bomb,  2]),
 )
 
 const explotion2$ = bomb2$.pipe(
@@ -143,10 +146,11 @@ const explotion2$ = bomb2$.pipe(
   map(bomb => [bomb, 1])
 )
 
-const endExplotion1$ = bomb1$.pipe(
-  delay(2000),
-  map(bomb => [bomb,  2]),
+const putBomb2$ = bomb2$.pipe(
+  map(bomb => [bomb,0])
 )
+
+
 
 const endExplotion2$ = bomb2$.pipe(
   delay(2000),
@@ -171,7 +175,9 @@ const bombMerged2$ = merge(
 
 const game$ = combLatest(
   player1$, player2$, bombMerged1$, bombMerged2$, (pos1, pos2 ,bomb1, bomb2) => ({p1: pos1, p2: pos2, b1: bomb1, b2: bomb2 })
-).subscribe(game => {
+).subscribe(nextStream)
+
+function nextStream(game) {
   const bombs = [game.b1, game.b2];
   render(ctx, game,WALLS);
   const p2Won = bombs.some(bomb => {
@@ -192,7 +198,7 @@ const game$ = combLatest(
     p2Won && renderText(ctx,'P2 wins');
     p1Won && renderText(ctx,'P1 wins');
   }
-})
+}
 
 function colision(player, direccion, walls) {
   return walls.filter((wall) => {
@@ -250,7 +256,7 @@ function render(context, game, walls) {
     const cols = 10;
     let frameWidth = sprite.width / cols;
     let frameHeight = sprite.height / rows;
-    context.drawImage(sprite, 2* frameWidth+4, 1 * frameHeight, frameWidth, frameHeight, 
+    context.drawImage(sprite, 2* frameWidth+4, 0 * frameHeight, frameWidth, frameHeight, 
     x, y, CELL_SIZE, CELL_SIZE);
   } 
   renderBomb(context, bombs)
