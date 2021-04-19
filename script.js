@@ -12,85 +12,60 @@ document.body.appendChild(canvas);
 
 const tick$ = interval(5);
 
-const keyDown$ = fromEvent(document, 'keydown')
-
-const direction$ = keyDown$.pipe(
-  map(e => DIRECTIONS[e.keyCode]),
-  filter(Boolean),
-  startWith({x: 0, y: 0}),
-);
-
-const keyDownMod$ = keyDown$.pipe(
-  map(e => e.keyCode),
-
-  map(x => [x, 'DOWN']),
-);
-
-const direction2$ = keyDown$.pipe(
-  map(e => DIRECTIONS2[e.keyCode]),
-  filter(Boolean),
-  startWith({x: 0, y: 0}),
-);
-
-const keyDownFilter$ = keyDown$.pipe(
-  filter(e => DIRECTIONS[e.keyCode] !== undefined )
-)
-
-const keyDownFilter2$ = keyDown$.pipe(
-  filter(e => DIRECTIONS2[e.keyCode] !== undefined)
-)
+const keyDown$ = fromEvent(document, 'keydown');
 
 const keyUp$ = fromEvent(document, 'keyup');
 
-const keys$ = keyUp$.pipe(
-  withLatestFrom(keyDownFilter$, (up, down) => ({up: up.keyCode, down: down.keyCode})),
-  filter(x => x.up === x.down),
-  map(x => [x.up, 'UP']),
-)
+const keyDownMod$ = keyDown$.pipe(
+  map(e => e.keyCode),
+  map(x => [x, 'DOWN']),
+);
 
-const keys2$ = keyUp$.pipe(
-  withLatestFrom(keyDownFilter2$, (up, down) => ({up: up.keyCode, down: down.keyCode})),
-  filter(x => x.up === x.down),
-  map(x => [x.up, 'UP'])
-)
+function generatePlayer(keyDown$, keyDownMod$, directions, init_pos, speed, num) {
+  const direction$ = keyDown$.pipe(
+    map(e => directions[e.keyCode]),
+    filter(Boolean),
+    startWith({x: 0, y: 0}),
+  );
 
-const last$ = merge(keys$, keyDownMod$).pipe(
-  map(e => [DIRECTIONS[e[0]], e[1]]),
-  filter(x => Boolean(x[0])),
-  map(x => x[1]),
-  startWith('UP'),
-)
+  const keyDownFilter$ = keyDown$.pipe(
+    filter(e => directions[e.keyCode] !== undefined )
+  )
 
-const last2$ = merge(keys2$, keyDownMod$).pipe(
-  map(e => [DIRECTIONS2[e[0]], e[1]]),
-  filter(x => Boolean(x[0])),
-  map(x => x[1]),
-  startWith('UP'),
-)
+  const keys$ = keyUp$.pipe(
+    withLatestFrom(keyDownFilter$, (up, down) => ({up: up.keyCode, down: down.keyCode})),
+    filter(x => x.up === x.down),
+    map(x => [x.up, 'UP']),
+  )
 
-const player1$ = tick$.pipe(
-  withLatestFrom(last$, direction$,(_, ekey, dir) => ({ekey, dir})),
-  throttleTime(SPEED),
-  filter(x => x.ekey === 'DOWN'),
-  map(x => ({ direction: x.dir, walls: WALLS })),
-  scan(move, INITIAL_POSITION_P1),
-  startWith(INITIAL_POSITION_P1),
-  tap(pos => {
-    state = {...state, player1: pos}
-  })
-)
+  const last$ = merge(keys$, keyDownMod$).pipe(
+    map(e => [directions[e[0]], e[1]]),
+    filter(x => Boolean(x[0])),
+    map(x => x[1]),
+    startWith('UP'),
+  )
 
-const player2$ = tick$.pipe(
-  withLatestFrom(last2$, direction2$,(_, ekey, dir) => ({ekey, dir})),
-  throttleTime(SPEED),
-  filter(x => x.ekey === 'DOWN'),
-  map(x => ({ direction: x.dir, walls: WALLS })),
-  scan(move, INITIAL_POSITION_P2),
-  startWith(INITIAL_POSITION_P2),
-  tap(pos => {
-    state = {...state, player2: pos}
-  })
-)
+  const player$ = tick$.pipe(
+    withLatestFrom(last$, direction$,(_, ekey, dir) => ({ekey, dir})),
+    throttleTime(speed),
+    filter(x => x.ekey === 'DOWN'),
+    map(x => ({ direction: x.dir, walls: WALLS })),
+    scan(move, init_pos),
+    startWith(init_pos),
+    tap(pos => {
+      if (num === 1){
+        state = {...state, player1: pos}
+      } else {
+        state = {...state, player2: pos}
+      }
+    })
+  )
+
+  return player$
+}
+
+const player1$ = generatePlayer(keyDown$, keyDownMod$, DIRECTIONS, INITIAL_POSITION_P1, SPEED, 1);
+const player2$ = generatePlayer(keyDown$, keyDownMod$, DIRECTIONS2, INITIAL_POSITION_P2, SPEED, 2);
 
 const bomb1$ = keyDown$.pipe(
   filter(e => e.keyCode === ENTER),
