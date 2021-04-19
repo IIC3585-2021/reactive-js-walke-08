@@ -9,7 +9,7 @@ import { DIRECTIONS, DIRECTIONS2, INITIAL_DIRECTION, CELL_SIZE, ROWS, COLS, WALL
 import { nextDirection } from './functions.js'
 
 const sprite  = new Image()
-sprite.src = "./bomberman.png"
+sprite.src = "./img/bomberman.png"
 console.log(sprite.width)
 
 let state = {player1: {}, player2: {}}
@@ -19,7 +19,7 @@ let ctx = canvas.getContext('2d');
 document.body.appendChild(canvas);
 
 const img = new Image()
-img.src = "./indestructible_wall.png"
+img.src = "./img/indestructible_wall.png"
 
 
 function ClearCanvas(context, width, height) {
@@ -232,7 +232,7 @@ function renderWalls(context, walls) {
     const y = wall.y * (CELL_SIZE / 2);
 
     const img = new Image()
-    img.src = "./indestructible_wall.png"
+    img.src = "./img/indestructible_wall.png"
     ctx.drawImage(img, x, y, CELL_SIZE, CELL_SIZE)
   })
 }
@@ -248,9 +248,9 @@ function render(context, game, walls) {
     const y = positions[prop].y * (CELL_SIZE / 2);
     const sprite = new Image()
     if (prop === "p1") {
-      sprite.src = "./bomberman.png"
+      sprite.src = "./img/bomberman.png"
     } else {
-      sprite.src = "./bomberman2.png"
+      sprite.src = "./img/bomberman2.png"
     }
     const rows = 4;
     const cols = 10;
@@ -295,7 +295,7 @@ function renderBomb(context, bombs) {
   bombs.forEach(bomba => {
     if (bomba[1] === 0) {
       const sprite = new Image()
-      sprite.src = "./bomberman.png"
+      sprite.src = "./img/bomberman.png"
       const rows = 5;
       const cols = 12;
       let frameWidth = sprite.width / cols;
@@ -307,7 +307,7 @@ function renderBomb(context, bombs) {
       }
     } else if (bomba[1] === 1) {
       const bombita = new Image()
-      bombita.src = "./Bomb_explode_2.png"
+      bombita.src = "./img/Bomb_explode_2.png"
       context.drawImage(bombita, bomba[0].x*(CELL_SIZE / 2), bomba[0].y*(CELL_SIZE / 2),
       CELL_SIZE, CELL_SIZE)
       const availables = availableExplosion(bomba[0])
@@ -315,7 +315,7 @@ function renderBomb(context, bombs) {
         const x = bomba[0].x + posicion.x*2
         const y = bomba[0].y + posicion.y*2
         const bombita = new Image()
-        bombita.src = "./Bomb_explode_2.png"
+        bombita.src = "./img/Bomb_explode_2.png"
         context.drawImage(bombita, x*(CELL_SIZE / 2), y*(CELL_SIZE / 2),
         CELL_SIZE, CELL_SIZE)
       })
