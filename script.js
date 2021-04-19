@@ -70,20 +70,20 @@ function generateBomb(keyDown$, actionKey, num) {
     map(bomb => [bomb, 0]),
   )
 
-  const explotion$ = bomb$.pipe(
+  const explosion$ = bomb$.pipe(
     delay(1500),
     map(bomb => [bomb, 1]),
   )
 
-  const endExplotion$ = bomb$.pipe(
+  const endExplosion$ = bomb$.pipe(
     delay(2000),
     map(bomb => [bomb,  2]),
   )
 
   const bombMerged$ = merge(
     putBomb$,
-    explotion$,
-    endExplotion$,
+    explosion$,
+    endExplosion$,
   ).pipe(
     startWith(['start', 2])
   )
