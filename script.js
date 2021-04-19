@@ -1,8 +1,8 @@
-import { fromEvent, from, interval, merge, combineLatest, asyncScheduler } from "https://unpkg.com/rxjs@6.6.7/_esm2015/index.js"
-import { map, filter, tap, startWith, scan, distinctUntilChanged, skip, throttleTime, withLatestFrom, reduce, delay } from "https://unpkg.com/rxjs@6.6.7/_esm2015/operators/index.js"
-import { createCanvasElement, render, renderText, CANVAS_HEIGHT, CANVAS_WIDTH } from "./canvas.js"
-import { DIRECTIONS, DIRECTIONS2, INITIAL_DIRECTION, CELL_SIZE, ROWS, COLS, WALLS, SPACE, ENTER, INITIAL_POSITION_P1, INITIAL_POSITION_P2, SPEED } from './constants.js'
-import { move, colision, availableExplosion, gameOver } from './functions.js'
+import { fromEvent, interval, merge, combineLatest } from "https://unpkg.com/rxjs@6.6.7/_esm2015/index.js"
+import { map, filter, tap, startWith, scan, throttleTime, withLatestFrom, delay } from "https://unpkg.com/rxjs@6.6.7/_esm2015/operators/index.js"
+import { createCanvasElement, render, renderText } from "./canvas.js"
+import { DIRECTIONS, DIRECTIONS2, WALLS, SPACE, ENTER, INITIAL_POSITION_P1, INITIAL_POSITION_P2, SPEED } from './constants.js'
+import { move, gameOver } from './functions.js'
 
 let state = {player1: {}, player2: {}}
 
@@ -64,64 +64,43 @@ function generatePlayer(keyDown$, keyDownMod$, directions, init_pos, speed, num)
   return player$
 }
 
+function generateBomb(keyDown$, actionKey, num) {
+  const bomb$ = keyDown$.pipe(
+    filter(e => e.keyCode === actionKey),
+    throttleTime(2100),
+    map(() => num === 1 ? state.player1 : state.player2),
+  )
+
+  const putBomb$ = bomb$.pipe(
+    map(bomb => [bomb, 0]),
+  )
+
+  const explotion$ = bomb$.pipe(
+    delay(1500),
+    map(bomb => [bomb, 1]),
+  )
+
+  const endExplotion$ = bomb$.pipe(
+    delay(2000),
+    map(bomb => [bomb,  2]),
+  )
+
+  const bombMerged$ = merge(
+    putBomb$,
+    explotion$,
+    endExplotion$,
+  ).pipe(
+    startWith(['start', 2])
+  )
+
+  return bombMerged$;
+}
+
 const player1$ = generatePlayer(keyDown$, keyDownMod$, DIRECTIONS, INITIAL_POSITION_P1, SPEED, 1);
 const player2$ = generatePlayer(keyDown$, keyDownMod$, DIRECTIONS2, INITIAL_POSITION_P2, SPEED, 2);
 
-const bomb1$ = keyDown$.pipe(
-  filter(e => e.keyCode === ENTER),
-  throttleTime(2100),
-  map(() => state.player1),
-)
-
-const bomb2$ = keyDown$.pipe(
-  filter(e => e.keyCode === SPACE),
-  throttleTime(2100),
-  map(() => state.player2)
-)
-
-const putBomb1$ = bomb1$.pipe(
-  map(bomb => [bomb, 0]),
-)
-
-const explotion1$ = bomb1$.pipe(
-  delay(1500),
-  map(bomb => [bomb, 1]),
-)
-
-const endExplotion1$ = bomb1$.pipe(
-  delay(2000),
-  map(bomb => [bomb,  2]),
-)
-
-const explotion2$ = bomb2$.pipe(
-  delay(1500),
-  map(bomb => [bomb, 1])
-)
-
-const putBomb2$ = bomb2$.pipe(
-  map(bomb => [bomb,0])
-)
-
-const endExplotion2$ = bomb2$.pipe(
-  delay(2000),
-  map(bomb => [bomb,2])
-)
-
-const bombMerged1$ = merge(
-  putBomb1$,
-  explotion1$,
-  endExplotion1$,
-).pipe(
-  startWith(['start', 2])
-)
-
-const bombMerged2$ = merge(
-  putBomb2$,
-  explotion2$,
-  endExplotion2$,
-).pipe(
-  startWith(['start', 2])
-)
+const bombMerged1$ = generateBomb(keyDown$, ENTER, 1);
+const bombMerged2$ = generateBomb(keyDown$, SPACE, 2);
 
 const game$ = combineLatest(
   player1$, player2$, bombMerged1$, bombMerged2$, (pos1, pos2 ,bomb1, bomb2) => ({p1: pos1, p2: pos2, b1: bomb1, b2: bomb2 })
