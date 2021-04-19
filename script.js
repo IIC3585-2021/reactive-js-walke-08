@@ -12,33 +12,28 @@ document.body.appendChild(canvas);
 
 const tick$ = interval(5);
 
-const keyDown$ = fromEvent(document, 'keydown');
+const keyDown$ = fromEvent(document, 'keydown', e => [e.keyCode, 'DOWN']);
 
 const keyUp$ = fromEvent(document, 'keyup');
 
-const keyDownMod$ = keyDown$.pipe(
-  map(e => e.keyCode),
-  map(x => [x, 'DOWN']),
-);
-
-function generatePlayer(keyDown$, keyDownMod$, directions, init_pos, speed, num) {
+function generatePlayer(keyDown$, keyUp$, directions, init_pos, speed, num) {
   const direction$ = keyDown$.pipe(
-    map(e => directions[e.keyCode]),
+    map(e => directions[e[0]]),
     filter(Boolean),
     startWith({x: 0, y: 0}),
   );
 
   const keyDownFilter$ = keyDown$.pipe(
-    filter(e => directions[e.keyCode] !== undefined )
+    filter(e => directions[e[0]] !== undefined )
   )
 
   const keys$ = keyUp$.pipe(
-    withLatestFrom(keyDownFilter$, (up, down) => ({up: up.keyCode, down: down.keyCode})),
+    withLatestFrom(keyDownFilter$, (up, down) => ({up: up.keyCode, down: down[0]})),
     filter(x => x.up === x.down),
     map(x => [x.up, 'UP']),
   )
 
-  const last$ = merge(keys$, keyDownMod$).pipe(
+  const last$ = merge(keys$, keyDown$).pipe(
     map(e => [directions[e[0]], e[1]]),
     filter(x => Boolean(x[0])),
     map(x => x[1]),
@@ -66,7 +61,7 @@ function generatePlayer(keyDown$, keyDownMod$, directions, init_pos, speed, num)
 
 function generateBomb(keyDown$, actionKey, num) {
   const bomb$ = keyDown$.pipe(
-    filter(e => e.keyCode === actionKey),
+    filter(e => e[0] === actionKey),
     throttleTime(2100),
     map(() => num === 1 ? state.player1 : state.player2),
   )
@@ -96,8 +91,8 @@ function generateBomb(keyDown$, actionKey, num) {
   return bombMerged$;
 }
 
-const player1$ = generatePlayer(keyDown$, keyDownMod$, DIRECTIONS, INITIAL_POSITION_P1, SPEED, 1);
-const player2$ = generatePlayer(keyDown$, keyDownMod$, DIRECTIONS2, INITIAL_POSITION_P2, SPEED, 2);
+const player1$ = generatePlayer(keyDown$, keyUp$, DIRECTIONS, INITIAL_POSITION_P1, SPEED, 1);
+const player2$ = generatePlayer(keyDown$, keyUp$, DIRECTIONS2, INITIAL_POSITION_P2, SPEED, 2);
 
 const bombMerged1$ = generateBomb(keyDown$, ENTER, 1);
 const bombMerged2$ = generateBomb(keyDown$, SPACE, 2);
