@@ -1,3 +1,9 @@
+export const SPACE = 32;
+export const ENTER = 13;
+export const SPEED = 120;
+export const INITIAL_POSITION_P1 = {x: 20, y: 14};
+export const INITIAL_POSITION_P2 = {x: 8, y: 14};
+
 export const DIRECTIONS = {
   37: { x: -1, y:  0 },
   38: { x:  0, y: -1 },
@@ -107,13 +113,3 @@ export const WALLS = [
   {x: 10*2, y: 12*2},
   {x: 12*2, y: 12*2},
 ];
-
-export const INITIAL_DIRECTION = DIRECTIONS[40];
-export const CELL_SIZE = 40;
-export const COLS = 15;
-export const ROWS = 15;
-export const SPACE = 32;
-export const ENTER = 13;
-export const SPEED = 120;
-export const INITIAL_POSITION_P1 = {x: 20, y: 14};
-export const INITIAL_POSITION_P2 = {x: 8, y: 14};

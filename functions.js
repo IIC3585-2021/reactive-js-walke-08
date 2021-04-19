@@ -1,4 +1,5 @@
-import { WALLS, COLS, ROWS } from './constants.js'
+import { WALLS } from './constants.js'
+import { COLS, ROWS } from './canvas.js'
 
 export function colision(player, direccion, walls) {
   return walls.filter((wall) => {
